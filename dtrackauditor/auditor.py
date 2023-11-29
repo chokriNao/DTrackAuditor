@@ -204,3 +204,52 @@ class Auditor:
         r = requests.put(host + API_BOM_UPLOAD, data=json.dumps(payload), headers=headers)
         response_dict = json.loads(r.text)
         return response_dict.get('token')
+
+    @staticmethod
+    def activate_deactivate_project(host, key, project_name, version, active):
+        uuid = Auditor.project_lookup_create(host, key, project_name, version)
+        payload = {
+            "name": project_name,
+            "version": version,
+            "uuid": uuid,
+            "active": active
+        }
+        
+        url = host + API_PROJECT
+        headers = {
+            "content-type": "application/json",
+            "X-API-Key": key
+        }
+        r = requests.post(url, data=json.dumps(payload), headers=headers)
+        return r.status_code
+
+    @staticmethod
+    def add_to_parent(host, key, project_name, version, parent_name, parent_version):
+        uuid = Auditor.project_lookup_create(host, key, project_name, version)
+        if (parent_name is not None and parent_version is not None):
+            parent_uuid = Auditor.project_lookup_create(dt_server, dt_api_key, parent_name, parent_version)
+            payload = {
+                "name": project_name,
+                "version": version,
+                "uuid": uuid,
+                "parent": {
+                    "name": project_name,
+                    "version": version,
+                    "uuid": parent_uuid
+                }
+            }
+        else:
+            payload = {
+            "name": project_name,
+            "version": version,
+            "uuid": uuid,
+            "parent": {}
+        }
+
+            url = host + API_PROJECT
+            headers = {
+                "content-type": "application/json",
+                "X-API-Key": key
+            }
+            r = requests.post(url, data=json.dumps(payload), headers=headers)
+            return r.status_code

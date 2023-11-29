@@ -39,6 +39,13 @@ def parse_cmd_args():
     parser.add_argument('-l', '--showdetails', type=str,
                         help='displays vulnerabilities details in the stdout based on severity selected. Use with Auto mode.'
                              ' eg values: true or false or all. Default is False.')
+    parser.add_argument('-e', '--active', type=str,
+                        help='')
+    parser.add_argument('-n', '--parent', type=str,
+                        help='')
+    parser.add_argument('-w', '--parent-version', type=str,
+                        help='')
+
     args = parser.parse_args()
     if args.url is None:
         args.url = DTRACK_SERVER
@@ -60,6 +67,10 @@ def parse_cmd_args():
         args.filename = DEFAULT_FILENAME
     if args.showdetails is None:
         args.showdetails = DEFAULT_SHOWDETAILS
+    #if args.active is None:
+    #    args.active = "true"
+    #if args.attributes is None:
+    #    args.attributes = {}
     return args
 
 def main():
@@ -78,6 +89,7 @@ def main():
        len(args.version) == 0:
         print('Project Name and Version are required. Check help --help.')
         sys.exit(1)
+    
 
     project_name = args.project.strip()
     version = args.version.strip()
@@ -93,9 +105,37 @@ def main():
             show_details
         )
         return
-    project_uuid = Auditor.project_lookup_create(dt_server, dt_api_key, project_name, version)
-    Auditor.read_upload_bom(dt_server, dt_api_key, project_name, version, filename)
-    print(project_uuid)
+    try:
+        project_uuid = Auditor.project_lookup_create(dt_server, dt_api_key, project_name, version)
+        Auditor.read_upload_bom(dt_server, dt_api_key, project_name, version, filename)
+        print(project_uuid)
+    except:
+        print('Warnning! missing bom.xml')
+    
+    if args.active:
+        active = args.active.strip()
+        Auditor.activate_deactivate_project(
+            dt_server,
+            dt_api_key,
+            project_name,
+            version,
+            active
+        )
+        return
+
+    if (args.parent is not None and args.parent_version is not None):
+        parent_name = args.parent.strip()
+        parent_version = args.parent_version.strip()
+        Auditor.add_to_parent(
+            dt_server,
+            dt_api_key,
+            project_name,
+            version,
+            parent_name,
+            parent_version
+        )
+        return
 
 if __name__ == '__main__':
    main()
+
